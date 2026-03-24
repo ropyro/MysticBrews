@@ -3,10 +3,7 @@ package me.ropy.mysticbrews;
 import me.ropy.mysticbrews.command.MysticBrewsCommand;
 import me.ropy.mysticbrews.components.ComponentManager;
 import me.ropy.mysticbrews.config.BrewsConfig;
-import me.ropy.mysticbrews.listener.NPCRightClickListener;
-import me.ropy.mysticbrews.listener.ChairListeners;
-import me.ropy.mysticbrews.listener.PlayerItemConsumeListener;
-import me.ropy.mysticbrews.listener.PlayerQuitListener;
+import me.ropy.mysticbrews.listener.*;
 import me.ropy.mysticbrews.npc.NPCManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.event.Listener;
@@ -52,7 +49,8 @@ public final class MysticBrews extends JavaPlugin {
                 new NPCRightClickListener(),
                 new PlayerQuitListener(),
                 new PlayerItemConsumeListener(),
-                new ChairListeners());
+                new ChairListeners(),
+                new JukeBoxListeners());
 
         new BukkitRunnable() {
             @Override

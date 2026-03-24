@@ -1,5 +1,6 @@
 package me.ropy.mysticbrews.components;
 
+import me.ropy.mysticbrews.dsa.LinkedQueue;
 import org.bukkit.Location;
 
 import java.util.ArrayList;
@@ -8,9 +9,11 @@ import java.util.List;
 public class ComponentManager {
 
     private BrewsJukeBox jukeBox;
+    private LinkedQueue<BrewsJukeBox.MusicDisc> songQueue;
     private List<Chair> chairs;
 
     public ComponentManager(){
+        songQueue = new LinkedQueue<>();
         chairs = new ArrayList<>();
     }
 
@@ -51,5 +54,13 @@ public class ComponentManager {
 
     public void setJukeBox(BrewsJukeBox jukeBox) {
         this.jukeBox = jukeBox;
+    }
+
+    public BrewsJukeBox.MusicDisc getNextSong(){
+        return songQueue.dequeue();
+    }
+
+    public void addSongToQueue(BrewsJukeBox.MusicDisc musicDisc){
+        this.songQueue.enqueue(musicDisc);
     }
 }
