@@ -1,0 +1,12 @@
+name: MysticBrews
+author: 'Ropy'
+version: '1.0-SNAPSHOT'
+main: me.ropy.mysticbrews.MysticBrews
+api-version: '1.21'
+softdepend: [Vault, DecentHolograms, Citizens]
+commands:
+  mysticbrews:
+    description: Main command to manage the potion brewery
+    usage: /mysticbrews <create/start/stop/leadb>
+    aliases: ['mb','brews','potionshop']
+
