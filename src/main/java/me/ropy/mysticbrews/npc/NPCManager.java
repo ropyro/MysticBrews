@@ -6,29 +6,45 @@ import me.ropy.mysticbrews.customer.NPCCustomer;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.trait.SitTrait;
-import org.bukkit.Bukkit;
+import net.citizensnpcs.trait.SkinTrait;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class NPCManager {
 
     private Location spawnLoc;
 
-    public void setSpawnLoc(Location location){
+    private List<NPC> activeNPCs;
+    private BrewceNPC brewceNPC;
+
+    private static final String[] NAMES = {"Judith", "Mark", "Vorkor", "Jebadiah", "Horus", "Keeki", "Merigda"};
+    private static final String[] SKIN_NAMES = {"bunny_bunny_1", "Rain47", "Calvael", "Cainan_Bolacha", "Yatyx", "Tw_PoloThePanda"};
+
+    public NPCManager() {
+        this.activeNPCs = new ArrayList<>();
+        this.brewceNPC = new BrewceNPC();
+    }
+
+    public void setSpawnLoc(Location location) {
         this.spawnLoc = location;
     }
 
-    public void spawnCustomerNPC() {
-        if(spawnLoc == null) return;
+    public boolean spawnCustomerNPC() {
+        if (spawnLoc == null) return false;
 
         Chair targetChair = MysticBrews.getInstance().getComponentManager().getRandomOpenChair();
-        if (targetChair == null) return;
+        if (targetChair == null) return false;
 
-        NPC npc = CitizensAPI.getNPCRegistry().createNPC(EntityType.PLAYER, "Customer_" + (Math.random() * 1000));
+        NPC npc = getRandomCustomer();
         npc.spawn(spawnLoc);
+
+        activeNPCs.add(npc);
 
         Location npcloc = npc.getStoredLocation();
         npcloc.getWorld().spawnParticle(Particle.POOF, npcloc, 1);
@@ -40,48 +56,76 @@ public class NPCManager {
 
         new BukkitRunnable() {
             int tickCount = 0;
+
             @Override
             public void run() {
-                if(!npc.getNavigator().isNavigating()){
+                if (!npc.getNavigator().isNavigating()) {
                     this.cancel();
                     npc.teleport(targetChair.getNPCSitLoc(), PlayerTeleportEvent.TeleportCause.COMMAND);
                     npc.getOrAddTrait(SitTrait.class).setSitting(targetChair.getNPCSitLoc());
                     MysticBrews.getInstance().getBrewsManager().seatCustomer(npc.getUniqueId(), targetChair);
                     return;
                 }
-                if(tickCount++ > 300){
+                if (tickCount++ > 300) {
                     npc.destroy();
                     targetChair.setActiveCustomer(null);
                     this.cancel();
                 }
             }
         }.runTaskTimer(MysticBrews.getInstance(), 20l, 5l);
+        return true;
     }
 
-    public void returnToSpawnLoc(NPC npc){
-        Bukkit.broadcastMessage(npc.getName() + " is Returning to spawn loc");
-        if(spawnLoc == null || npc == null) return;
-        Bukkit.broadcastMessage(npc.getName() + " is Returning to spawn loc1");
+    public void returnToSpawnLoc(NPC npc) {
+        if (spawnLoc == null || npc == null) return;
         npc.getOrAddTrait(SitTrait.class).setSitting(null);
 
         npc.getNavigator().setTarget(spawnLoc);
         new BukkitRunnable() {
             int tickCount = 0;
+
             @Override
             public void run() {
-                if(!npc.getNavigator().isNavigating()){
+                if (!npc.getNavigator().isNavigating()) {
                     this.cancel();
                     npc.despawn();
                     npc.destroy();
                     spawnLoc.getWorld().spawnParticle(Particle.POOF, spawnLoc, 1);
+                    activeNPCs.remove(npc);
                     return;
                 }
-                if(tickCount++ > 300){
+                if (tickCount++ > 300) {
                     npc.destroy();
                     this.cancel();
                 }
             }
         }.runTaskTimer(MysticBrews.getInstance(), 40l, 5l);
+    }
+
+    private NPC getRandomCustomer() {
+        NPC customer = CitizensAPI.getNPCRegistry().createNPC(EntityType.PLAYER, "Customer");
+        customer.setName("&a" + NAMES[(int) (Math.random() * NAMES.length)]);
+        customer.getOrAddTrait(SkinTrait.class).setSkinName(SKIN_NAMES[(int) (Math.random() * SKIN_NAMES.length)]);
+        return customer;
+    }
+
+    public void removeActiveNPCs(){
+        activeNPCs.forEach(npc -> {
+            npc.despawn();
+            npc.destroy();
+        });
+    }
+    public List<NPC> getActiveNPCs() {
+        return activeNPCs;
+    }
+
+    public BrewceNPC getBrewceNPC() {
+        return brewceNPC;
+    }
+
+    public void setBrewceNPC(BrewceNPC brewceNPC) {
+        this.brewceNPC = brewceNPC;
+        activeNPCs.add(brewceNPC.getNpc());
     }
 
     public Location getSpawnLoc() {

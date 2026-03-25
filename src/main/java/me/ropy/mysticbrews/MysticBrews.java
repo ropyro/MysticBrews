@@ -3,13 +3,13 @@ package me.ropy.mysticbrews;
 import me.ropy.mysticbrews.command.MysticBrewsCommand;
 import me.ropy.mysticbrews.components.ComponentManager;
 import me.ropy.mysticbrews.config.BrewsConfig;
+import me.ropy.mysticbrews.item.BrewRegistry;
 import me.ropy.mysticbrews.listener.*;
 import me.ropy.mysticbrews.npc.NPCManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
 public final class MysticBrews extends JavaPlugin {
 
@@ -44,6 +44,8 @@ public final class MysticBrews extends JavaPlugin {
         npcManager = new NPCManager();
         pluginConfig = new BrewsConfig();
 
+        BrewRegistry.registerBrews();
+
         //register listeners
         registerListeners(
                 new NPCRightClickListener(),
@@ -51,20 +53,11 @@ public final class MysticBrews extends JavaPlugin {
                 new PlayerItemConsumeListener(),
                 new ChairListeners(),
                 new JukeBoxListeners());
-
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                componentManager.tickComponents();
-            }
-        }.runTaskTimer(this, 20L, 1L);
-
-        brewsManager.startGameLoop();
     }
 
     @Override
     public void onDisable() {
-
+        brewsManager.close();
     }
 
     public BrewsManager getBrewsManager() {

@@ -1,12 +1,13 @@
 package me.ropy.mysticbrews;
 
-import me.ropy.mysticbrews.components.Chair;
 import me.ropy.mysticbrews.customer.AbstractCustomer;
 import me.ropy.mysticbrews.customer.NPCCustomer;
 import me.ropy.mysticbrews.customer.Order;
 import me.ropy.mysticbrews.customer.PlayerCustomer;
 import me.ropy.mysticbrews.gui.OrderGUI;
 import me.ropy.mysticbrews.item.BrewItem;
+import me.ropy.mysticbrews.item.price.EcoPrice;
+import net.citizensnpcs.api.trait.trait.Equipment;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionType;
@@ -15,13 +16,11 @@ public class BrewSession {
 
     private BrewSessionState state;
     private AbstractCustomer customer;
-    private Chair chair;
-
     private Order order;
 
     private int updateCounter;
-    private boolean guiOpened;
-    private boolean startedBrewing;
+
+    private boolean openedGui;
 
     public BrewSession(AbstractCustomer customer) {
         this(customer, BrewSessionState.ORDERING);
@@ -29,44 +28,33 @@ public class BrewSession {
 
     public BrewSession(AbstractCustomer customer, BrewSessionState brewSessionState) {
         this.customer = customer;
-        this.chair = customer.getChair();
         this.state = brewSessionState;
         updateCounter = 0;
-        guiOpened = false;
-        startedBrewing = false;
+        this.order = null;
+        openedGui = false;
     }
 
     public void update() {
-        Bukkit.broadcastMessage(customer.getName() + "'s session is in state: " + state.name());
+        //Bukkit.broadcastMessage(customer.getName() + "'s session is in state: " + state.name());
         switch (state) {
             case ORDERING -> {
                 if (customer instanceof PlayerCustomer playerCustomer) {
-                    Player player = playerCustomer.getPlayer();
-                    if (!guiOpened) {
+                    if(!openedGui){
+                        Player player = playerCustomer.getPlayer();
                         new OrderGUI(player).openWindow();
-                        guiOpened = true;
+                        openedGui = true;
                     }
-                    return;
-                }
+                } else
                 if (++updateCounter >= 2) {
                     updateCounter = 0;
                     this.state = BrewSessionState.BREWING;
-                    order = new Order(customer, new BrewItem("test", PotionType.HARMING));
+                    order = new Order(customer, new BrewItem("test", PotionType.HARMING, new EcoPrice(10.0d)));
                 }
             }
             case BREWING -> {
                 if (this.order == null) {
                     this.state = BrewSessionState.ORDERING;
-                    guiOpened = false;
-                    return;
-                }
-                if (!startedBrewing && customer instanceof PlayerCustomer playerCustomer) {
-                    playerCustomer.getPlayer().sendMessage("Now brewing your, " + order.getBrewItems().size() + " potion order!");
-                    startedBrewing = true;
-                }
-                if (++updateCounter >= 2) {
-                    updateCounter = 0;
-                    this.state = BrewSessionState.SERVING;
+                    openedGui = false;
                 }
             }
             case SERVING -> {
@@ -79,16 +67,15 @@ public class BrewSession {
                 if (customer instanceof PlayerCustomer playerCustomer) {
                     Player player = playerCustomer.getPlayer();
                     order.getBrewItems().stream().forEach(bi -> player.getInventory().addItem(bi.createItemStack()));
-                    playerCustomer.getPlayer().sendMessage("Here is your order! To reenter the queue, right click Brewce!");
+                    playerCustomer.getPlayer().sendMessage("§aHere is your order! To reenter the queue, right click Brewce!");
                 } else if (customer instanceof NPCCustomer npcCustomer) {
-                    Bukkit.broadcastMessage("Debug: Processing NPC Finish for " + npcCustomer.getName());
                     if (npcCustomer.getNpc() != null && npcCustomer.getChair() != null) {
                         npcCustomer.getChair().setActiveCustomer(null);
                         MysticBrews.getInstance().getNpcManager().returnToSpawnLoc(npcCustomer.getNpc());
-                    } else {
-                        Bukkit.broadcastMessage("Debug: NPC or Chair was null! NPC: " + (npcCustomer.getNpc() != null));
+                        npcCustomer.getNpc().getOrAddTrait(Equipment.class).set(Equipment.EquipmentSlot.HAND, order.getBrewItems().getFirst().createItemStack());
                     }
                 }
+                MysticBrews.getInstance().getBrewsManager().addCompletedOrder(order);
                 MysticBrews.getInstance().getBrewsManager().setActiveSession(null);
             }
         }
@@ -104,8 +91,17 @@ public class BrewSession {
         updateCounter = 0;
     }
 
+    public void proceedToServing(){
+        this.state = BrewSessionState.SERVING;
+        updateCounter = 0;
+    }
+
     public Order getOrder() {
         return order;
+    }
+
+    public AbstractCustomer getCustomer() {
+        return customer;
     }
 
     public BrewSessionState getState() {

@@ -1,16 +1,27 @@
 package me.ropy.mysticbrews.command;
 
+import me.ropy.mysticbrews.BrewsManager;
 import me.ropy.mysticbrews.MysticBrews;
 import me.ropy.mysticbrews.components.BrewsJukeBox;
 import me.ropy.mysticbrews.components.Chair;
+import me.ropy.mysticbrews.components.Workstation;
+import me.ropy.mysticbrews.customer.Order;
+import me.ropy.mysticbrews.dsa.MergeSort;
+import me.ropy.mysticbrews.npc.BrewceNPC;
+import me.ropy.mysticbrews.npc.NPCManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BrewingStand;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MysticBrewsCommand implements CommandExecutor {
 
@@ -33,20 +44,100 @@ public class MysticBrewsCommand implements CommandExecutor {
         switch (subCommand){
             case "spawnnpc" -> handleSpawnNPC(player);
             case "reload" -> handleReload(player);
-            case "report" -> player.sendMessage("TODO: daily report...");
+            case "report" -> handleSalesReport(player);
             case "set" -> handleSet(player, args);
             case "add" -> handleAdd(player, args);
+            case "open" -> handleOpen(player);
+            case "close" -> handleClose(player);
         }
         return true;
     }
 
+    //TODO: merge sort (recursion + sorting)
+    private void handleSalesReport(Player player){
+        BrewsManager bm = MysticBrews.getInstance().getBrewsManager();
+        List<Order> completed = bm.getCompletedOrders();
+
+        if(completed.isEmpty()){
+            player.sendMessage("§cError: no sales data yet!");
+            return;
+        }
+
+        Map<String, Integer> customerCounts = new HashMap<>();
+        for(Order order : completed){
+            String name = order.getCustomer().getName();
+            customerCounts.put(name, customerCounts.getOrDefault(name, 0) + order.getBrewItems().size());
+        }
+
+        int[] counts = new int[customerCounts.size()];
+        int index = 0;
+        for(int count : customerCounts.values()){
+            counts[index] = count;
+            index++;
+        }
+
+        MergeSort.sortHighLow(counts);
+
+        player.sendMessage("§aSales Report: ");
+        player.sendMessage(" §7- Order Count: §a" + bm.getCompletedOrders().size());
+        player.sendMessage(" §7- Unique Customers: §a" + customerCounts.size());
+        player.sendMessage(" §7- Top Customers: §a");
+        int displayLimit = Math.min(counts.length, 3);
+        for(int i = 0; i < displayLimit; i++){
+            int score = counts[i];
+            String found = null;
+            for(String name : customerCounts.keySet()){
+                if(customerCounts.get(name).equals(score)){
+                    found = name;
+                    player.sendMessage("  §f#" + (i+1) + " " + name + " §a" + score);
+                    break;
+                }
+            }
+            if(found != null){
+                customerCounts.remove(found);
+            }
+        }
+    }
+
+    private void handleOpen(Player player){
+        var mb = MysticBrews.getInstance();
+        BrewceNPC brewceNPC = MysticBrews.getInstance().getNpcManager().getBrewceNPC();
+        if(MysticBrews.getInstance().getComponentManager().getWorkStations().isEmpty()){
+            player.sendMessage("§cError: could not open, no brewing stations set");
+        } else if (brewceNPC.getCauldron() == null){
+            player.sendMessage("§cError: could not open, no cauldron set");
+        } else if (brewceNPC.getSpawnLoc() == null){
+            player.sendMessage("§cError: could not open, brewce's spawnpoint not set");
+        }else if(mb.getComponentManager().getChairs().isEmpty()){
+            player.sendMessage("§cError: could not open, no chairs set");
+        }else if(!mb.getBrewsManager().isOpen()){
+            mb.getBrewsManager().open();
+            player.sendMessage("§aThe brewery is now open!");
+        }else{
+            player.sendMessage("§cError: the brewery is already open silly!");
+        }
+    }
+
+    private void handleClose(Player player){
+        var bm = MysticBrews.getInstance().getBrewsManager();
+        if(bm.isOpen()){
+            bm.close();
+            player.sendMessage("§aThe brewery is now closed! Do /brews report to see the daily report.");
+        }else{
+            player.sendMessage("§cError: brews is not currently open.");
+        }
+    }
+
     private void handleSpawnNPC(Player player) {
-        if (MysticBrews.getInstance().getNpcManager().getSpawnLoc() == null) {
+        NPCManager npcManager = MysticBrews.getInstance().getNpcManager();
+        if (npcManager.getSpawnLoc() == null) {
             player.sendMessage("§cError: you must set the NPC spawn location first");
             return;
         }
-        MysticBrews.getInstance().getNpcManager().spawnCustomerNPC();
-        player.sendMessage("§aCustomer NPC spawned!");
+        if(MysticBrews.getInstance().getNpcManager().spawnCustomerNPC())
+            player.sendMessage("§aCustomer NPC spawned!");
+        else
+            player.sendMessage("§cCould not spawn npc, no chairs available");
     }
 
     private void handleReload(Player player) {
@@ -71,11 +162,26 @@ public class MysticBrewsCommand implements CommandExecutor {
                     player.sendMessage("§cYou must be looking at a jukebox.");
                 }
             }
+            case "cauldron" -> {
+                Block block = player.getTargetBlockExact(5);
+                if (block != null && (block.getType() == Material.WATER_CAULDRON || block.getType() == Material.CAULDRON)) {
+                    MysticBrews.getInstance().getNpcManager().getBrewceNPC().setCauldron(block);
+                    player.sendMessage("§aCauldron location set!");
+                } else {
+                    player.sendMessage("§cYou must be looking at a cauldron.");
+                }
+            }
+            case "brewcespawn" -> {
+                Location loc = player.getLocation();
+                MysticBrews.getInstance().getNpcManager().getBrewceNPC().setSpawnLoc(loc);
+                player.sendMessage(String.format("§aBrewce spawn set to: %.1f, %.1f, %.1f", loc.x(), loc.y(), loc.z()));
+            }
             case "npcspawn" -> {
                 Location loc = player.getLocation();
                 MysticBrews.getInstance().getNpcManager().setSpawnLoc(loc);
                 player.sendMessage(String.format("§aNPC spawn set to: %.1f, %.1f, %.1f", loc.x(), loc.y(), loc.z()));
             }
+            default -> player.sendMessage("§cInvalid usage: /mysticbrews set <jukebox/cauldron/brewcespawn/npcspawn>");
         }
     }
 
@@ -84,24 +190,34 @@ public class MysticBrewsCommand implements CommandExecutor {
             player.sendMessage("§cUsage: /brew add <chair>");
             return;
         }
+        switch (args[1].toLowerCase()){
+            case "chair" -> {
+                Block block = player.getTargetBlockExact(5);
+                Chair chair = Chair.of(block);
 
-        if (args[1].equalsIgnoreCase("chair")) {
-            Block block = player.getTargetBlockExact(5);
-            Chair chair = Chair.of(block);
+                if (chair == null) {
+                    player.sendMessage("§cYou must look at a stair block.");
+                    return;
+                }
 
-            if (chair == null) {
-                player.sendMessage("§cYou must look at a stair block.");
-                return;
+                if (MysticBrews.getInstance().getComponentManager().isChair(block.getLocation())) {
+                    player.sendMessage("§cThat is already an active chair!");
+                    return;
+                }
+
+                chair.init();
+                MysticBrews.getInstance().getComponentManager().addChair(chair);
+                player.sendMessage("§aChair added successfully!");
             }
-
-            if (MysticBrews.getInstance().getComponentManager().isChair(block.getLocation())) {
-                player.sendMessage("§cThat is already an active chair!");
-                return;
+            case "brewingstand" -> {
+                Block block = player.getTargetBlockExact(5);
+                if (block != null && block.getType() == Material.BREWING_STAND) {
+                    MysticBrews.getInstance().getComponentManager().addWorkstation(new Workstation(block));
+                    player.sendMessage("§aBrewing stand added successfully!");
+                }else{
+                    player.sendMessage("§cYou must look at a brewing stand block.");
+                }
             }
-
-            chair.init();
-            MysticBrews.getInstance().getComponentManager().addChair(chair);
-            player.sendMessage("§aChair added successfully!");
         }
     }
 }

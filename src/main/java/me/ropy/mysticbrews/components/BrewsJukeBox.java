@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public class BrewsJukeBox extends BrewsComponent {
+public class BrewsJukeBox implements BrewsComponent {
 
     private Location location;
     private String holoId;
@@ -26,11 +26,13 @@ public class BrewsJukeBox extends BrewsComponent {
 
     @Override
     public void tick() {
-        if (songTicksLeft <= 0) {
-            playNextSong();
-        }
-        if(currentsong != null){
+        if(songTicksLeft > 0)
             songTicksLeft--;
+
+        if (songTicksLeft <= 0) {
+            if(currentsong != null)
+                stopCurrentMusic();
+            playNextSong();
         }
         updateHologram();
     }
@@ -41,21 +43,32 @@ public class BrewsJukeBox extends BrewsComponent {
     }
 
     private void playNextSong() {
-        if (currentsong != null)
+        MusicDisc next = MysticBrews.getInstance().getComponentManager().getNextSong();
+        if (next != null) {
+            stopCurrentMusic();
+            //this.songTicksLeft = next.durationTicks / 20;
+            this.songTicksLeft = 5;
+            location.getWorld().playSound(location, next.sound, 10.0f, 1.0f);
+            this.currentsong = next;
+        } else {
+            this.currentsong = null;
+        }
+    }
+
+    private void stopCurrentMusic() {
+        if (currentsong != null) {
             for (Player player : location.getWorld().getPlayers()) {
                 if (player.getLocation().distance(location) < 32) {
                     player.stopSound(currentsong.sound);
                 }
             }
-        MusicDisc next = MysticBrews.getInstance().getComponentManager().getNextSong();
-        if (next != null) {
-            //this.songTicksLeft = next.durationTicks / 20;
-            this.songTicksLeft = 5*20;
-            location.getWorld().playSound(location, next.sound, 4.0f, 1.0f);
-            this.currentsong = next;
-        } else {
-            this.currentsong = null;
         }
+    }
+
+    public void reset(){
+        stopCurrentMusic();
+        currentsong = null;
+        songTicksLeft = 0;
     }
 
     private void updateHologram() {
@@ -66,9 +79,9 @@ public class BrewsJukeBox extends BrewsComponent {
                     DHAPI.setHologramLines(holo, List.of("&6&lJuke Box", "&7(Right Click to Queue!)"));
                 } else {
                     DHAPI.setHologramLines(holo, List.of(
-                            "&b&lNow Playing:",
+                            "&6&lNow Playing:",
                             "&f" + currentsong.title(),
-                            "&7Queued by: &b" + currentsong.queuerName()
+                            "&7Queued by: &6" + currentsong.queuerName()
                     ));
                 }
             } else {

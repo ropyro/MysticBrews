@@ -26,32 +26,25 @@ public class BrewsManager {
     private List<Order> completedOrders;
     private BrewSession activeSession;
 
+    private BukkitRunnable gameLoop;
+
     public BrewsManager(){
         customers = new HashTable<>(10);
         barQueue = new LinkedQueue<>();
         completedOrders = new ArrayList<>();
         this.activeSession = null;
-    }
-
-    public void seatCustomer(UUID customerUUID, Chair chair){
-        AbstractCustomer customer = getCustomer(customerUUID);
-        addCustomerToQueue(customer);
-        customer.setChair(chair);
-        chair.setActiveCustomer(customer);
-    }
-
-    public void dismounCustomer(UUID customerUUID, Chair chair){
-        chair.setSittingStand(null);
-        chair.setActiveCustomer(null);
-        removeFromQueue(customerUUID);
+        gameLoop = null;
     }
 
     public void startGameLoop(){
-        new BukkitRunnable(){
+        gameLoop = new BukkitRunnable(){
             @Override
             public void run() {
-                if(MysticBrews.getInstance().getComponentManager().getOpenChairCount() >= 2 && Math.random() > 0.9){
-                    MysticBrews.getInstance().getNpcManager().spawnCustomerNPC();
+                MysticBrews mysticBrews = MysticBrews.getInstance();
+                mysticBrews.getComponentManager().tickComponents();
+
+                if(mysticBrews.getComponentManager().getOpenChairCount() >= 2 && Math.random() > 0.9){
+                    mysticBrews.getNpcManager().spawnCustomerNPC();
                 }
                 if(activeSession == null){
                     AbstractCustomer nextCustomer = getNextCustomer();
@@ -61,8 +54,46 @@ public class BrewsManager {
                 }else{
                     activeSession.update();
                 }
+
+                mysticBrews.getNpcManager().getBrewceNPC().updateNavigation();
             }
-        }.runTaskTimer(MysticBrews.getInstance(), 0, 20l);
+        };
+        gameLoop.runTaskTimer(MysticBrews.getInstance(), 20l, 20l);
+    }
+
+    public void seatCustomer(UUID customerUUID, Chair chair){
+        AbstractCustomer customer = getCustomer(customerUUID);
+        addCustomerToQueue(customer);
+        customer.setChair(chair);
+        chair.setActiveCustomer(customer);
+    }
+
+    public boolean open(){
+        if(MysticBrews.getInstance().getNpcManager().getBrewceNPC().createBrewceNPC() != null && gameLoop == null){
+            customers = new HashTable<>(10);
+            barQueue = new LinkedQueue<>();
+            completedOrders = new ArrayList<>();
+            this.activeSession = null;
+            startGameLoop();
+            return true;
+        }
+        return false;
+    }
+
+    public void close(){
+        if(gameLoop != null){
+            gameLoop.cancel();
+            gameLoop = null;
+            MysticBrews.getInstance().getNpcManager().getActiveNPCs().forEach(npc -> {
+                npc.despawn();
+                npc.destroy();
+            });
+            MysticBrews.getInstance().getComponentManager().resetComponents();
+        }
+    }
+
+    public boolean isOpen(){
+        return gameLoop != null;
     }
 
     public AbstractCustomer getCustomer(UUID uuid){
@@ -83,13 +114,6 @@ public class BrewsManager {
         return customer;
     }
 
-
-    //TODO: SEARCHING
-    private boolean chargeCustomer(Order order){
-        return true;
-    }
-
-
     public BrewSession getActiveSession() {
         return activeSession;
     }
@@ -97,16 +121,28 @@ public class BrewsManager {
     public void setActiveSession(BrewSession brewSession){
         this.activeSession = brewSession;
     }
-
-    public void addCustomerToQueue(AbstractCustomer customer){
-        this.barQueue.enqueue(customer);
-    }
-
     public AbstractCustomer getNextCustomer(){
         return barQueue.dequeue();
     }
 
-    public void removeFromQueue(UUID uuid){
-        barQueue.remove(getCustomer(uuid));
+    public void addCustomerToQueue(AbstractCustomer customer){
+        if(barQueue.search(customer)) return;
+        if(activeSession != null && activeSession.getCustomer() == customer) return;
+        if(customer instanceof PlayerCustomer playerCustomer){
+            playerCustomer.getPlayer().sendMessage("§aYou have joined the order queue!");
+        }
+        this.barQueue.enqueue(customer);
+    }
+
+    public void addCompletedOrder(Order order){
+        this.completedOrders.add(order);
+    }
+
+    public List<Order> getCompletedOrders() {
+        return completedOrders;
+    }
+
+    public void removeFromQueue(AbstractCustomer abstractCustomer){
+        barQueue.remove(abstractCustomer);
     }
 }

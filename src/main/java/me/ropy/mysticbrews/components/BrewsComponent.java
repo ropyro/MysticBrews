@@ -1,10 +1,10 @@
 package me.ropy.mysticbrews.components;
 
-public abstract class BrewsComponent {
+public interface BrewsComponent {
 
-    public abstract void tick();
+    void tick();
 
-    public abstract void init();
+    void init();
 
 
 }

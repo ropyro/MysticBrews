@@ -1,6 +1,7 @@
 package me.ropy.mysticbrews.item;
 
 import me.ropy.mysticbrews.MysticBrews;
+import me.ropy.mysticbrews.item.price.BrewPrice;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -15,9 +16,12 @@ public class BrewItem {
     private String displayName;
     private PotionType potionType;
 
-    public BrewItem(String displayName, PotionType potionType) {
+    private BrewPrice price;
+
+    public BrewItem(String displayName, PotionType potionType, BrewPrice price) {
         this.displayName = displayName;
         this.potionType = potionType;
+        this.price = price;
     }
 
     public ItemStack createItemStack() {
@@ -30,15 +34,15 @@ public class BrewItem {
         return potionItem;
     }
 
-    protected void consumeItem(Player player, ItemStack item) {
-        if (item.getAmount() > 1) {
-            item.setAmount(item.getAmount() - 1);
-        } else {
-            player.getInventory().setItemInMainHand(null);
-        }
-    }
-
     public String getDisplayName() {
         return displayName;
+    }
+
+    public PotionType getPotionType() {
+        return potionType;
+    }
+
+    public BrewPrice getPrice() {
+        return price;
     }
 }

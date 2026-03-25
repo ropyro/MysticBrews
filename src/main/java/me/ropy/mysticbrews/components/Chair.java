@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Stair based chair for RPG plugin spigot
  */
-public class Chair extends BrewsComponent {
+public class Chair implements BrewsComponent {
 
     private Location location;
     private BlockFace blockFace;

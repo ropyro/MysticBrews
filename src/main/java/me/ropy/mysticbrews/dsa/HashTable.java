@@ -120,7 +120,7 @@ public class HashTable<K, V> {
             if (!table[index].isDeleted() && table[index].key.equals(key)) {
                 table[index].delete();
                 size--;
-                loadFactor = size/table.length;
+                loadFactor = (double) size/table.length;
                 return;
             }
 

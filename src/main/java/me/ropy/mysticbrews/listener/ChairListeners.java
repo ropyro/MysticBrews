@@ -2,8 +2,7 @@ package me.ropy.mysticbrews.listener;
 
 import me.ropy.mysticbrews.MysticBrews;
 import me.ropy.mysticbrews.components.Chair;
-import me.ropy.mysticbrews.customer.AbstractCustomer;
-import me.ropy.mysticbrews.util.SittingHelper;
+import me.ropy.mysticbrews.util.SittingUtil;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -32,11 +31,9 @@ public class ChairListeners implements Listener {
                     bm.seatCustomer(player.getUniqueId(), chair);
 
                     event.getPlayer().teleport(chair.getNPCSitLoc());
-                    ArmorStand armorStand = SittingHelper.spawnArmorStand(chair.getNPCSitLoc().clone().add(0, -1,0));
+                    ArmorStand armorStand = SittingUtil.spawnArmorStand(chair.getNPCSitLoc().clone().add(0, -1,0));
                     armorStand.addPassenger(player);
                     chair.setSittingStand(armorStand);
-
-                    player.sendMessage("You have joined the bar queue! Brewce will serve you pronto..");
                     return;
                 }
             }
@@ -49,10 +46,9 @@ public class ChairListeners implements Listener {
         if (!(event.getDismounted().getType().equals(EntityType.ARMOR_STAND))) return;
         for (Chair chair : MysticBrews.getInstance().getComponentManager().getChairs()) {
             if(chair.getSittingStand() != null && chair.getSittingStand().equals(event.getDismounted())){
-                MysticBrews.getInstance().getBrewsManager().dismounCustomer(event.getEntity().getUniqueId(), chair);
+                chair.setSittingStand(null);
+                chair.setActiveCustomer(null);
 
-                event.getEntity().sendMessage("You have left the bar queue");
-                //run later so the player dismounts properly
                 new BukkitRunnable() {
                     @Override
                     public void run() {
@@ -63,6 +59,7 @@ public class ChairListeners implements Listener {
         }
     }
 
+    //TODO: edge case
     @EventHandler
     public void onDisconnect(PlayerQuitEvent event){
         Player player = event.getPlayer();
@@ -71,7 +68,8 @@ public class ChairListeners implements Listener {
             for(Chair chair : MysticBrews.getInstance().getComponentManager().getChairs()){
                 if(chair.getSittingStand().equals(vehicle)){
                     vehicle.remove();
-                    MysticBrews.getInstance().getBrewsManager().dismounCustomer(player.getUniqueId(), chair);
+                    chair.setSittingStand(null);
+                    chair.setActiveCustomer(null);
                 }
             }
         }
