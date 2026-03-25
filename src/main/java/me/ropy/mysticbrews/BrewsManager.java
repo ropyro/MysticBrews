@@ -20,6 +20,7 @@ import java.util.UUID;
 public class BrewsManager {
 
     //TODO: Hash Table
+    //used to store all customers in one place accessible by their unique id
     private HashTable<UUID, AbstractCustomer> customers;
     //TODO: Linked Lists & Queue
     private LinkedQueue<AbstractCustomer> barQueue;
@@ -37,15 +38,20 @@ public class BrewsManager {
     }
 
     public void startGameLoop(){
+        //initialize gameloop runnable
         gameLoop = new BukkitRunnable(){
             @Override
             public void run() {
                 MysticBrews mysticBrews = MysticBrews.getInstance();
+                //Tick/update the components (chairs/jukebox/brewingstands)
                 mysticBrews.getComponentManager().tickComponents();
 
+                //randomly spawn customer npc's if chairs are available
                 if(mysticBrews.getComponentManager().getOpenChairCount() >= 2 && Math.random() > 0.9){
                     mysticBrews.getNpcManager().spawnCustomerNPC();
                 }
+
+                //update the active session or move through the barQueue
                 if(activeSession == null){
                     AbstractCustomer nextCustomer = getNextCustomer();
                     if(nextCustomer != null){
@@ -55,25 +61,35 @@ public class BrewsManager {
                     activeSession.update();
                 }
 
+                //update Brewce npc
                 mysticBrews.getNpcManager().getBrewceNPC().updateNavigation();
             }
         };
+        //Starts the runnable with a 20 tick delay, and 20 tick interval
         gameLoop.runTaskTimer(MysticBrews.getInstance(), 20l, 20l);
     }
 
+    //Main method of adding customer's to a queue, both NPC and player.
     public void seatCustomer(UUID customerUUID, Chair chair){
+        //gets the Customer object
         AbstractCustomer customer = getCustomer(customerUUID);
+        //Adds to the queue
         addCustomerToQueue(customer);
+        //saves their chair object
         customer.setChair(chair);
+        //Makes the chair hold the customer as an active sitter so no one else can sit there
         chair.setActiveCustomer(customer);
     }
 
     public boolean open(){
+        //Checks if brewce was created properly (all his locations are set) and if the gameloop is not currently running (already open)
         if(MysticBrews.getInstance().getNpcManager().getBrewceNPC().createBrewceNPC() != null && gameLoop == null){
+            //reset the data structures
             customers = new HashTable<>(10);
             barQueue = new LinkedQueue<>();
             completedOrders = new ArrayList<>();
             this.activeSession = null;
+            //start the runnable
             startGameLoop();
             return true;
         }
@@ -81,13 +97,17 @@ public class BrewsManager {
     }
 
     public void close(){
+        //check if gameloop is actually running
         if(gameLoop != null){
+            //cancel the task
             gameLoop.cancel();
             gameLoop = null;
+            //despawn all npcs
             MysticBrews.getInstance().getNpcManager().getActiveNPCs().forEach(npc -> {
                 npc.despawn();
                 npc.destroy();
             });
+            //reset the chairs/jukebox/workstations
             MysticBrews.getInstance().getComponentManager().resetComponents();
         }
     }
@@ -97,7 +117,9 @@ public class BrewsManager {
     }
 
     public AbstractCustomer getCustomer(UUID uuid){
+        //Attemp to get customer from the hashtable
         AbstractCustomer customer = customers.get(uuid);
+        //if customer null add them to the table
         if(customer == null){
             Player player = Bukkit.getPlayer(uuid);
             if(player != null){
@@ -126,7 +148,9 @@ public class BrewsManager {
     }
 
     public void addCustomerToQueue(AbstractCustomer customer){
+        //ignore customers already in queue
         if(barQueue.search(customer)) return;
+        //ignore customers actively ordering/brewing
         if(activeSession != null && activeSession.getCustomer() == customer) return;
         if(customer instanceof PlayerCustomer playerCustomer){
             playerCustomer.getPlayer().sendMessage("§aYou have joined the order queue!");

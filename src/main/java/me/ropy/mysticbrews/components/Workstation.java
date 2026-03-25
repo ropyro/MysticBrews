@@ -2,7 +2,6 @@ package me.ropy.mysticbrews.components;
 
 import eu.decentsoftware.holograms.api.DHAPI;
 import eu.decentsoftware.holograms.api.holograms.Hologram;
-import me.ropy.mysticbrews.customer.Order;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -15,13 +14,11 @@ public class Workstation implements BrewsComponent{
     private Block brewingStand;
     private final String holoId;
     private boolean brewing;
-    private Order currentOrder;
 
     public Workstation(Block brewingStand){
         this.brewingStand = brewingStand;
         this.holoId = "BREWSTATION_" + Math.abs(brewingStand.getLocation().hashCode());
         brewing = false;
-        currentOrder = null;
     }
 
     @Override
@@ -74,10 +71,6 @@ public class Workstation implements BrewsComponent{
 
     public boolean isBrewing() {
         return brewing;
-    }
-
-    public void setCurrentOrder(Order currentOrder) {
-        this.currentOrder = currentOrder;
     }
 
     public Location getLocation() {

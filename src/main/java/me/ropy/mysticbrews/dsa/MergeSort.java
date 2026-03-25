@@ -40,6 +40,7 @@ public class MergeSort {
                 continue;
             }
 
+            //This > was a < this makes it sort high low instead
             if(left[l] > right[r]){
                 arr[r + l] = left[l];
                 l++;

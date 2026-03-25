@@ -1,5 +1,6 @@
 package me.ropy.mysticbrews.listener;
 
+import me.ropy.mysticbrews.BrewsManager;
 import me.ropy.mysticbrews.MysticBrews;
 import me.ropy.mysticbrews.components.Chair;
 import me.ropy.mysticbrews.util.SittingUtil;
@@ -20,16 +21,21 @@ public class ChairListeners implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event){
+        //return if not a right click block iteraction or if player already mounted
         if(event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if(event.getPlayer().getVehicle() != null) return;
+
         Block block = event.getClickedBlock();
         Player player = event.getPlayer();
         if(block != null){
+            //search for if there is a valid chair with matching location to block clicked
             for(Chair chair : MysticBrews.getInstance().getComponentManager().getChairs()){
                 if(chair.getLocation().equals(block.getLocation()) && chair.isOpen()){
-                    var bm = MysticBrews.getInstance().getBrewsManager();
+                    //Tell brewmanager the customer sat down (adds to queue)
+                    BrewsManager bm = MysticBrews.getInstance().getBrewsManager();
                     bm.seatCustomer(player.getUniqueId(), chair);
 
+                    //handle sitting feature
                     event.getPlayer().teleport(chair.getNPCSitLoc());
                     ArmorStand armorStand = SittingUtil.spawnArmorStand(chair.getNPCSitLoc().clone().add(0, -1,0));
                     armorStand.addPassenger(player);

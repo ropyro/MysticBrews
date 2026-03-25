@@ -24,6 +24,7 @@ public class ComponentManager {
     //called once per second (20 minecraft ticks)
     public void tickComponents(){
         chairs.forEach(c -> c.tick());
+        workstations.forEach(ws -> ws.tick());
         if(jukeBox != null)
             jukeBox.tick();
     }
@@ -66,6 +67,7 @@ public class ComponentManager {
     }
 
     public void resetComponents(){
+        workstations.forEach(ws -> ws.setBrewing(false));
         chairs.forEach(chair -> chair.setActiveCustomer(null));
         if(jukeBox != null)
             jukeBox.reset();

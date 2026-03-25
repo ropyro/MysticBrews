@@ -58,41 +58,53 @@ public class MysticBrewsCommand implements CommandExecutor {
         BrewsManager bm = MysticBrews.getInstance().getBrewsManager();
         List<Order> completed = bm.getCompletedOrders();
 
+        //edge case: no sales data
         if(completed.isEmpty()){
             player.sendMessage("§cError: no sales data yet!");
             return;
         }
 
+        //put customer name + order count into table (map)
         Map<String, Integer> customerCounts = new HashMap<>();
         for(Order order : completed){
             String name = order.getCustomer().getName();
+            //checks if customerCounts already had data for specific name, adds order count to their current total
             customerCounts.put(name, customerCounts.getOrDefault(name, 0) + order.getBrewItems().size());
         }
 
+        //Setup int array to merge sort
         int[] counts = new int[customerCounts.size()];
         int index = 0;
+        //fill array with customer counts
         for(int count : customerCounts.values()){
             counts[index] = count;
             index++;
         }
 
+        //Merge sort the counts (i made a sortHighLow because regular sort is least to greatest
         MergeSort.sortHighLow(counts);
 
         player.sendMessage("§aSales Report: ");
         player.sendMessage(" §7- Order Count: §a" + bm.getCompletedOrders().size());
         player.sendMessage(" §7- Unique Customers: §a" + customerCounts.size());
         player.sendMessage(" §7- Top Customers: §a");
+        //Not effecient, but made it possible to use merge sort int[] for this task
         int displayLimit = Math.min(counts.length, 3);
+        //loops through either how many counts we have, or the limit which i set to 3 (common for leaderboards)
         for(int i = 0; i < displayLimit; i++){
             int score = counts[i];
             String found = null;
+            //O(N) linear search through all the names(keys) in the customerCounts table
             for(String name : customerCounts.keySet()){
+                //Checks if current name's value is equal to the current rank's score
                 if(customerCounts.get(name).equals(score)){
+                    //saves the name to remove it before next search
                     found = name;
                     player.sendMessage("  §f#" + (i+1) + " " + name + " §a" + score);
                     break;
                 }
             }
+            //if a name was found, remove it from the table
             if(found != null){
                 customerCounts.remove(found);
             }

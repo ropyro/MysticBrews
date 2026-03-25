@@ -30,7 +30,6 @@ public class Chair implements BrewsComponent {
         this.holoId = "BREWCHAIR_" + Math.abs(location.hashCode());
     }
 
-    //Called when active to update holograms and other features of brew components
     @Override
     public void tick(){
         updateHologram();
@@ -67,6 +66,7 @@ public class Chair implements BrewsComponent {
 
     //Returns the exact location where a citizens NPC should stand before having their sit method called
     //This ensures they sit on the lower part of a stair versus the top
+    //this was difficult to do took a lot of tinkering...
     public Location getNPCSitLoc(){
         switch (blockFace){
             case EAST -> {
@@ -105,13 +105,6 @@ public class Chair implements BrewsComponent {
         return currentCustomer;
     }
 
-    //chair factory method
-    public static Chair of(Block block){
-        if(block != null && block.getBlockData() instanceof Stairs stair)
-            return new Chair(block.getLocation(), stair.getFacing());
-        return null;
-    }
-
     public Location getLocation() {
         return location;
     }
@@ -126,5 +119,12 @@ public class Chair implements BrewsComponent {
 
     public void setSittingStand(ArmorStand sittingStand) {
         this.sittingStand = sittingStand;
+    }
+
+    //chair factory method
+    public static Chair of(Block block){
+        if(block != null && block.getBlockData() instanceof Stairs stair)
+            return new Chair(block.getLocation(), stair.getFacing());
+        return null;
     }
 }

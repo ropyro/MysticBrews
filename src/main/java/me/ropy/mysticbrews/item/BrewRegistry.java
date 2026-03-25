@@ -13,7 +13,7 @@ import org.bukkit.potion.PotionType;
 public class BrewRegistry {
 
     //tODO: hashtable
-    private static HashTable<String, BrewItem> registeredBrews = new HashTable<>(23);
+    private static HashTable<String, BrewItem> registeredBrews = new HashTable<>(100);
 
     public static void registerBrews(){
         registeredBrews.put("health", new BrewItem("Spirulina Spectaular", PotionType.HEALING, new ItemPrice(Material.DIAMOND, 10)));
@@ -28,10 +28,13 @@ public class BrewRegistry {
     public static BrewItem getById(String id){
         BrewItem brewItem = registeredBrews.get(id);
         if(brewItem == null)
-            brewItem = new BrewItem("Error", PotionType.AWKWARD, new EcoPrice(0));
+            brewItem = new BrewItem("Error " + id + " not registered!", PotionType.AWKWARD, new EcoPrice(0));
         return brewItem;
     }
 
+
+
+    //These methods i pulled from a different project of mine. Eventually will be used for custom potions & tracking
     public static BrewItem getFromItemStack(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return null;
 

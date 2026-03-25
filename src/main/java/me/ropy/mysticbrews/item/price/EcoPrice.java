@@ -15,6 +15,7 @@ public class EcoPrice implements BrewPrice {
         return amount;
     }
 
+    //vault api to manage in game economy
     @Override
     public boolean canAfford(Player player) {
         return MysticBrews.getEconomy().has(player, amount);

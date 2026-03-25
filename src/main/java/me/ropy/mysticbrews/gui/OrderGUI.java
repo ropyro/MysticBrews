@@ -24,6 +24,7 @@ import xyz.xenondevs.invui.window.Window;
 
 import java.util.List;
 
+//Xeon dev gui framework
 public class OrderGUI {
 
     private final Player opener;
@@ -122,7 +123,9 @@ public class OrderGUI {
 
             @Override
             public void handleClick(@NotNull ClickType click, @NotNull Player p, @NotNull InventoryClickEvent e) {
+                //check if player can afford it
                 if(brewItem.getPrice().canAfford(p)){
+                    //charge them the appropriate amount
                     brewItem.getPrice().charge(p);
                     MysticBrews.getInstance().getBrewsManager().getActiveSession().proceedToBrewing(brewItem);
                     p.closeInventory();
