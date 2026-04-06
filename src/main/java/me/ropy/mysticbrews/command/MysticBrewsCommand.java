@@ -7,12 +7,11 @@ import me.ropy.mysticbrews.components.Chair;
 import me.ropy.mysticbrews.components.Workstation;
 import me.ropy.mysticbrews.customer.Order;
 import me.ropy.mysticbrews.dsa.MergeSort;
-import me.ropy.mysticbrews.npc.BrewceNPC;
+import me.ropy.mysticbrews.npc.BrewtenderNPC;
 import me.ropy.mysticbrews.npc.NPCManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
-import org.bukkit.block.BrewingStand;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -113,12 +112,12 @@ public class MysticBrewsCommand implements CommandExecutor {
 
     private void handleOpen(Player player){
         var mb = MysticBrews.getInstance();
-        BrewceNPC brewceNPC = MysticBrews.getInstance().getNpcManager().getBrewceNPC();
+        BrewtenderNPC brewtenderNPC = MysticBrews.getInstance().getNpcManager().getBrewceNPC();
         if(MysticBrews.getInstance().getComponentManager().getWorkStations().isEmpty()){
             player.sendMessage("§cError: could not open, no brewing stations set");
-        } else if (brewceNPC.getCauldron() == null){
+        } else if (brewtenderNPC.getCauldron() == null){
             player.sendMessage("§cError: could not open, no cauldron set");
-        } else if (brewceNPC.getSpawnLoc() == null){
+        } else if (brewtenderNPC.getSpawnLoc() == null){
             player.sendMessage("§cError: could not open, brewce's spawnpoint not set");
         }else if(mb.getComponentManager().getChairs().isEmpty()){
             player.sendMessage("§cError: could not open, no chairs set");
@@ -154,7 +153,7 @@ public class MysticBrewsCommand implements CommandExecutor {
 
     private void handleReload(Player player) {
         player.sendMessage("§7Reloading MysticBrews config...");
-        MysticBrews.getInstance().getConfigLoader().reload();
+        MysticBrews.getInstance().getBrewConfig().reload();
         player.sendMessage("§aConfig reloaded!");
     }
 

@@ -10,9 +10,7 @@ import me.ropy.mysticbrews.util.LocationUtil;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.trait.trait.Equipment;
-import net.citizensnpcs.trait.LookClose;
 import net.citizensnpcs.trait.SkinTrait;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -21,10 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class BrewceNPC {
+public class BrewtenderNPC {
 
     private NPC npc;
     private Location spawnLoc;
@@ -34,11 +29,11 @@ public class BrewceNPC {
     private Workstation currentWorkstation;
     private boolean taskStarted;
 
-    public BrewceNPC() {
+    public BrewtenderNPC() {
         this(null, null);
     }
 
-    public BrewceNPC(Location spawnLoc, Block cauldron) {
+    public BrewtenderNPC(Location spawnLoc, Block cauldron) {
         this.spawnLoc = spawnLoc;
         this.cauldron = cauldron;
         this.npc = null;
@@ -160,7 +155,7 @@ public class BrewceNPC {
     public NPC createBrewceNPC() {
         NPC npc = null;
         if (spawnLoc != null && cauldron != null && !MysticBrews.getInstance().getComponentManager().getWorkStations().isEmpty()) {
-            npc = CitizensAPI.getNPCRegistry().createNPC(EntityType.PLAYER, "&5&lBrewce");
+            npc = CitizensAPI.getNPCRegistry().createNPC(EntityType.PLAYER, "&5&l" + MysticBrews.getInstance().getBrewConfig().getBartenderName());
             npc.getOrAddTrait(SkinTrait.class).setSkinName("Kalkulater");
             npc.spawn(spawnLoc);
             MysticBrews.getInstance().getNpcManager().getActiveNPCs().add(npc);

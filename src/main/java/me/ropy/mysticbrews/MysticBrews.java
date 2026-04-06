@@ -32,12 +32,6 @@ public final class MysticBrews extends JavaPlugin {
         if (!setupEconomy()) {
             getLogger().severe(String.format("[%s] - Vault economy not found. Economy based rewards disabled.", getDescription().getName()));
         }
-        if (getServer().getPluginManager().getPlugin("DecentHolograms") == null) {
-            getLogger().severe(String.format("[%s] - DecentHolograms not found. Holographic leaderboards disabled.", getDescription().getName()));
-        }
-        if (getServer().getPluginManager().getPlugin("Citizens") == null) {
-            getLogger().severe(String.format("[%s] - Citizens not found. NPCs disabled.", getDescription().getName()));
-        }
 
         brewsManager = new BrewsManager();
         componentManager = new ComponentManager();
@@ -72,7 +66,7 @@ public final class MysticBrews extends JavaPlugin {
         return npcManager;
     }
 
-    public BrewsConfig getConfigLoader() {
+    public BrewsConfig getBrewConfig() {
         return this.pluginConfig;
     }
 

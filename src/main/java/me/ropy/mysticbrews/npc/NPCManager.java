@@ -21,14 +21,14 @@ public class NPCManager {
     private Location spawnLoc;
 
     private List<NPC> activeNPCs;
-    private BrewceNPC brewceNPC;
+    private BrewtenderNPC brewtenderNPC;
 
     private static final String[] NAMES = {"Judith", "Mark", "Vorkor", "Jebadiah", "Horus", "Keeki", "Merigda"};
     private static final String[] SKIN_NAMES = {"bunny_bunny_1", "Rain47", "Calvael", "Cainan_Bolacha", "Yatyx", "Tw_PoloThePanda"};
 
     public NPCManager() {
         this.activeNPCs = new ArrayList<>();
-        this.brewceNPC = new BrewceNPC();
+        this.brewtenderNPC = new BrewtenderNPC();
     }
 
     public void setSpawnLoc(Location location) {
@@ -119,13 +119,13 @@ public class NPCManager {
         return activeNPCs;
     }
 
-    public BrewceNPC getBrewceNPC() {
-        return brewceNPC;
+    public BrewtenderNPC getBrewceNPC() {
+        return brewtenderNPC;
     }
 
-    public void setBrewceNPC(BrewceNPC brewceNPC) {
-        this.brewceNPC = brewceNPC;
-        activeNPCs.add(brewceNPC.getNpc());
+    public void setBrewceNPC(BrewtenderNPC brewtenderNPC) {
+        this.brewtenderNPC = brewtenderNPC;
+        activeNPCs.add(brewtenderNPC.getNpc());
     }
 
     public Location getSpawnLoc() {
